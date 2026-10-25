@@ -38,14 +38,22 @@ const upload = multer({
   }
 });
 
+// Main server page
 app.get('/', (req, res) => {
   res.send('VICKY FLIX server is running!');
 });
 
+// Admin upload page
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// Video list API
 app.get('/api/videos', (req, res) => {
   res.json(JSON.parse(fs.readFileSync(dataFile, 'utf8')));
 });
 
+// Admin upload API
 app.post('/api/admin/upload', (req, res, next) => {
   if (!ADMIN_TOKEN ||
       req.get('Authorization') !== `Bearer ${ADMIN_TOKEN}`) {
@@ -59,6 +67,7 @@ app.post('/api/admin/upload', (req, res, next) => {
   }
 
   const videos = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+
   const video = {
     id: Date.now().toString(),
     title: path.parse(req.file.originalname).name,
@@ -67,15 +76,24 @@ app.post('/api/admin/upload', (req, res, next) => {
 
   videos.push(video);
   fs.writeFileSync(dataFile, JSON.stringify(videos, null, 2));
-  res.status(201).json({ message: 'Video added', video });
+
+  res.status(201).json({
+    message: 'Video added',
+    video
+  });
 });
 
+// Serve uploaded videos
 app.use('/videos', express.static(uploadDir));
 
+// Error handler
 app.use((err, req, res, next) => {
-  res.status(400).json({ error: err.message || 'Request failed' });
+  res.status(400).json({
+    error: err.message || 'Request failed'
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`VICKY FLIX server running on port ${PORT}`);
 });
+    
